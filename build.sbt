@@ -24,3 +24,32 @@ libraryDependencies ++=
   Nil
 
 scalariformSettings
+
+publishTo <<= version { (v: String) =>
+  val nexus = "https://oss.sonatype.org/"
+  if (v.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+
+pomExtra := (
+  <url>https://github.com/net-a-porter/pre-canned</url>
+    <licenses>
+      <license>
+        <name>Apache 2</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+    <scm>
+      <url>git@github.com:net-a-porter/pre-canned.git</url>
+      <connection>scm:git@github.com:net-a-porter/pre-canned.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>theon</id>
+        <name>Ian Forsey</name>
+        <url>http://theon.github.io</url>
+      </developer>
+    </developers>)
