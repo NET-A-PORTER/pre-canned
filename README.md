@@ -21,6 +21,8 @@ Pre-canned currently comes in two flavours:
  * *[`basic`](#basic)* - Simple, but many parentheses
  * *[`fancy`](#fancy)* - Few parentheses, but quite wordy
 
+There are a basic set of [expectations](https://github.com/NET-A-PORTER/pre-canned/blob/master/src/main/scala/com/netaporter/precanned/Expectations.scala) and [canned responses](https://github.com/NET-A-PORTER/pre-canned/blob/master/src/main/scala/com/netaporter/precanned/CannedResponses.scala). Feel free to contribute more via a PR.
+
 Help make Pre-canned better and submit a new improved flavour via a PR, or ideas for one in an issue.
 
 ### basic
