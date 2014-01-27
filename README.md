@@ -11,7 +11,7 @@ Introduction
 Pre-canned helps you to mock out the HTTP services your application depends on. This can be especially useful
 for your integration testing.
 
-For SBT add the dependency `"com.netaporter" %% "pre-canned" % "0.0.1" % "test"`
+For SBT add the dependency `"com.netaporter" %% "pre-canned" % "0.0.2" % "test"`
 
 DSLs
 ----
