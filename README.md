@@ -21,7 +21,7 @@ Pre-canned currently comes in two flavours:
  * *[`basic`](#basic)* - Simple, but many parentheses
  * *[`fancy`](#fancy)* - Few parentheses, but quite wordy
 
-Help make the perfect DSL and submit a new flavour in a PR, or ideas for one in an issue.
+Help make Pre-canned better and submit a new improved flavour via a PR, or ideas for one in an issue.
 
 ### basic
 
