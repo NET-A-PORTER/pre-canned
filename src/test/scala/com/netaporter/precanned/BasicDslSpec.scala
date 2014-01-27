@@ -13,24 +13,20 @@ class BasicDslSpec
     extends FlatSpecLike
     with Matchers
     with BeforeAndAfter
-    with BeforeAndAfterAll {
-
-  implicit val system = ActorSystem()
-  implicit def ec = system.dispatcher
+    with BeforeAndAfterAll
+    with BaseSpec {
 
   val animalApi = httpServerMock(system).bind(8765)
 
   after { animalApi.clearExpecations }
   override def afterAll() { system.shutdown() }
 
-  val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
-
   "path expectation" should "match path" in {
     animalApi.expect(path("/animals"))
       .andRespondWith(resource("/responses/animals.json"))
 
     val resF = pipeline(Get("http://127.0.0.1:8765/animals"))
-    val res = Await.result(resF, 1.second)
+    val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
   }
@@ -40,7 +36,7 @@ class BasicDslSpec
       .andRespondWith(resource("/responses/giraffe.json"))
 
     val resF = pipeline(Get("http://127.0.0.1:8765/animals?name=giraffe"))
-    val res = Await.result(resF, 1.second)
+    val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""{"name": "giraffe"}""")
   }
@@ -53,7 +49,7 @@ class BasicDslSpec
       .andRespondWith(resource("/responses/giraffe.json"))
 
     val resF = pipeline(Get("http://127.0.0.1:8765/animals?name=giraffe"))
-    val res = Await.result(resF, 1.second)
+    val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
   }
@@ -62,7 +58,7 @@ class BasicDslSpec
     animalApi.expect(get, path("/animals")).andRespondWith(resource("/responses/animals.json"))
 
     val resF = pipeline(Get("http://127.0.0.1:8765/hotdogs"))
-    val res = Await.result(resF, 1.second)
+    val res = Await.result(resF, dur)
 
     res.status should equal(NotFound)
   }

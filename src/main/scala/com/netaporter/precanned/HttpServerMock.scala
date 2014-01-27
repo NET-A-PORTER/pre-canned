@@ -26,14 +26,11 @@ class HttpServerMock extends Actor {
       sender ! Register(self)
 
     case h: HttpRequest =>
-      println("Woooo")
       responses.find(_.expects(h)) match {
         case Some(pcr) =>
           sender ! pcr.response
         case None =>
           sender ! HttpResponse(status = NotFound)
       }
-
-    case x => println("WTF? " + x)
   }
 }
