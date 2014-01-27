@@ -1,10 +1,10 @@
 organization := "com.netaporter"
 
-version := "0.0.1"
+version := "0.0.2-SNAPSHOT"
 
 scalaVersion := "2.10.3"
 
-name := "Pre-canned"
+name := "pre-canned"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
