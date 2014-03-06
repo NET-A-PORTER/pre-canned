@@ -15,7 +15,7 @@ class FancyDslSpec
 
   // format: OFF
 
-  val animalApi = httpServerMock(system).bind(8766)
+  val animalApi = httpServerMock(system).bind(8766).block
 
   after { animalApi.clearExpecations }
   override def afterAll() { system.shutdown() }

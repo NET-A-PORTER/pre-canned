@@ -1,12 +1,10 @@
 package com.netaporter.precanned
 
-import akka.actor.ActorSystem
-import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike }
+import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike, OptionValues }
 import dsl.basic._
 import spray.client.pipelining._
-import spray.http.{ HttpRequest, HttpResponse }
-import scala.concurrent.{ Await, Future }
-import scala.concurrent.duration._
+import spray.http.HttpEntity
+import scala.concurrent.Await
 import spray.http.StatusCodes._
 
 class BasicDslSpec
@@ -14,9 +12,10 @@ class BasicDslSpec
     with Matchers
     with BeforeAndAfter
     with BeforeAndAfterAll
+    with OptionValues
     with BaseSpec {
 
-  val animalApi = httpServerMock(system).bind(8765)
+  val animalApi = httpServerMock(system).bind(8765).block
 
   after { animalApi.clearExpecations }
   override def afterAll() { system.shutdown() }
@@ -61,5 +60,16 @@ class BasicDslSpec
     val res = Await.result(resF, dur)
 
     res.status should equal(NotFound)
+  }
+
+  "custom status code with entity" should "return as expected" in {
+
+    animalApi.expect(get, path("/animals")).andRespondWith(status(404), entity(HttpEntity("""{"error": "animals not found"}""")))
+
+    val resF = pipeline(Get("http://127.0.0.1:8765/animals"))
+    val res = Await.result(resF, dur)
+
+    res.status should equal(NotFound)
+    res.entity.toOption.value.asString should equal("""{"error": "animals not found"}""")
   }
 }

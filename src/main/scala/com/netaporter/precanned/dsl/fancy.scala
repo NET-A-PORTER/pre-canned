@@ -7,21 +7,22 @@ import spray.can.Http
 import com.netaporter.precanned.HttpServerMock.ClearExpecations
 import spray.http._
 import com.netaporter.precanned.HttpServerMock.PrecannedResponse
+import akka.util.Timeout
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
+import akka.pattern.ask
 
 object fancy extends Expectations with CannedResponses {
 
   def httpServerMock(implicit af: ActorRefFactory) = {
     val actor = af.actorOf(Props[HttpServerMock])
-    Mock(actor)
+    Start(actor)
   }
 
-  case class Mock(mock: ActorRef) {
-    def expect(e: Expect) = MockExpects(e)
+  trait MockDsl {
+    def mock: ActorRef
 
-    def bind(port: Int)(implicit as: ActorSystem) = {
-      IO(Http) ! Http.Bind(mock, "127.0.0.1", port = port)
-      this
-    }
+    def expect(e: Expect) = MockExpects(e)
 
     def clearExpecations = {
       mock ! ClearExpecations
@@ -39,6 +40,22 @@ object fancy extends Expectations with CannedResponses {
       def end() = mock ! PrecannedResponse(expect, response(HttpResponse()))
     }
   }
+
+  case class Start(mock: ActorRef) extends MockDsl {
+    def bind(port: Int)(implicit as: ActorSystem, t: Timeout = 5.seconds) = {
+      val bindFuture = IO(Http) ? Http.Bind(mock, "127.0.0.1", port = port)
+      BindInProgress(mock, bindFuture.mapTo[Http.Bound], t)
+    }
+  }
+
+  case class BindInProgress(mock: ActorRef, bind: Future[Http.Bound], t: Timeout) extends MockDsl {
+    def block = {
+      Await.result(bind, t.duration)
+      BoundComplete(mock)
+    }
+  }
+
+  case class BoundComplete(mock: ActorRef) extends MockDsl
 
   class RespondWord
   val respond = new RespondWord

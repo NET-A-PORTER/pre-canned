@@ -30,7 +30,7 @@ There are a basic set of [expectations](https://github.com/NET-A-PORTER/pre-cann
 ```scala
 import com.netaporter.precanned.dsl.basic._
 
-val animalApi = httpServerMock(system).bind(8765)
+val animalApi = httpServerMock(system).bind(8765).block
 
 animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
          .andRespondWith(resource("/responses/giraffe.json"))
@@ -41,7 +41,7 @@ animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
 ```scala
 import com.netaporter.precanned.dsl.fancy._
 
-val animalApi = httpServerMock(system).bind(8766)
+val animalApi = httpServerMock(system).bind(8766).block
 
 animalApi expect
   get and path("/animals") and query("name" -> "giraffe") and
