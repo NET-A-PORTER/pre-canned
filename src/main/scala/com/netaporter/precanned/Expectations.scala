@@ -6,6 +6,7 @@ import spray.http.Uri.Query
 
 trait Expectations {
   val get = method(GET)
+  val put = method(PUT)
   val post = method(POST)
   val head = method(HEAD)
   val trace = method(TRACE)
