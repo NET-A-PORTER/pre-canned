@@ -17,7 +17,7 @@ class FancyDslSpec
 
   val animalApi = httpServerMock(system).bind(8766).block
 
-  after { animalApi.clearExpecations }
+  after { animalApi.clearExpectations }
   override def afterAll() { system.shutdown() }
 
   "path expectation" should "match path" in {

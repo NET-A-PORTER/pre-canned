@@ -1,7 +1,7 @@
 package com.netaporter.precanned.dsl
 
 import akka.actor.{ ActorSystem, Props, ActorRefFactory, ActorRef }
-import com.netaporter.precanned.HttpServerMock.ClearExpecations
+import com.netaporter.precanned.HttpServerMock.ClearExpectations
 import Function.chain
 import akka.io.IO
 import spray.can.Http
@@ -25,8 +25,8 @@ object basic extends Expectations with CannedResponses {
 
     def expect(es: Expect*) = MockExpects(mock, es)
 
-    def clearExpecations = {
-      mock ! ClearExpecations
+    def clearExpectations = {
+      mock ! ClearExpectations
       this
     }
   }
