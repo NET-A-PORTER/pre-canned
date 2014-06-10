@@ -2,13 +2,13 @@ package com.netaporter.precanned
 
 import akka.actor.Actor
 import spray.http.{ StatusCodes, HttpRequest, HttpResponse }
-import com.netaporter.precanned.HttpServerMock.{ ClearExpecations, PrecannedResponse }
+import com.netaporter.precanned.HttpServerMock.{ ClearExpectations, PrecannedResponse }
 import StatusCodes._
 import spray.can.Http.{ Connected, Register }
 
 object HttpServerMock {
   case class PrecannedResponse(expects: Expect, response: HttpResponse)
-  case object ClearExpecations
+  case object ClearExpectations
 }
 
 class HttpServerMock extends Actor {
@@ -19,7 +19,7 @@ class HttpServerMock extends Actor {
     case p: PrecannedResponse =>
       responses :+= p
 
-    case ClearExpecations =>
+    case ClearExpectations =>
       responses = Vector.empty[PrecannedResponse]
 
     case Connected(_, _) =>

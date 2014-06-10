@@ -4,7 +4,7 @@ import akka.actor.{ ActorSystem, ActorRef, Props, ActorRefFactory }
 import com.netaporter.precanned._
 import akka.io.IO
 import spray.can.Http
-import com.netaporter.precanned.HttpServerMock.ClearExpecations
+import com.netaporter.precanned.HttpServerMock.ClearExpectations
 import spray.http._
 import com.netaporter.precanned.HttpServerMock.PrecannedResponse
 import akka.util.Timeout
@@ -24,8 +24,8 @@ object fancy extends Expectations with CannedResponses {
 
     def expect(e: Expect) = MockExpects(e)
 
-    def clearExpecations = {
-      mock ! ClearExpecations
+    def clearExpectations = {
+      mock ! ClearExpectations
       this
     }
 
