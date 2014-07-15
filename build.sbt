@@ -1,6 +1,6 @@
 organization := "com.netaporter"
 
-version := "0.0.3"
+version := "0.0.4"
 
 scalaVersion := "2.10.3"
 
@@ -8,8 +8,8 @@ name := "pre-canned"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
-val akka = "2.2.3"
-val spray = "1.2.0"
+val akka = "2.3.0"
+val spray = "1.3.1"
 
 libraryDependencies ++=
   "com.typesafe.akka" %% "akka-actor" % akka ::
