@@ -72,4 +72,23 @@ class BasicDslSpec
     res.status should equal(NotFound)
     res.entity.toOption.value.asString should equal("""{"error": "animals not found"}""")
   }
+
+  "post request non empty content " should "match" in {
+    val postContent: String = """ {"name":"gorilla gustav"} """
+    animalApi.expect(post, path("/animals"), content(postContent)).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
+
+    val resF = pipeline(Post("http://127.0.0.1:8765/animals", postContent))
+    val res = Await.result(resF, dur)
+
+    res.entity.toOption.value.asString should equal("""{"record":"created" """)
+  }
+
+  "post request empty content " should "match" in {
+    animalApi.expect(post, path("/animals"), content()).andRespondWith(entity(HttpEntity("""{"error":"name not provided" """)))
+
+    val resF = pipeline(Post("http://127.0.0.1:8765/animals"))
+    val res = Await.result(resF, dur)
+
+    res.entity.toOption.value.asString should equal("""{"error":"name not provided" """)
+  }
 }
