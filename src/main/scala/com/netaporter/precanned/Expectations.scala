@@ -39,13 +39,20 @@ trait Expectations {
   def query(kvs: (String, String)*): Expect = r =>
     r.uri.query.filter(kvs.contains) == Query(kvs: _*)
 
-  def content(body: String = null): Expect = r => {
+  def header(hs: HttpHeader*): Expect = r =>
+    r.headers.filter(hs.contains) == hs.toList
+
+  def exactContent(content: String = null): Expect = r => {
     r.entity.toOption match {
-      case Some(entity) => entity.asString == body
-      case None => body == null
+      case Some(entity) => entity.data.asString == content
+      case None => content == null
     }
   }
 
-  def header(hs: HttpHeader*): Expect = r =>
-    r.headers.filter(hs.contains) == hs.toList
+  def containsContent(part: String): Expect = r => {
+    r.entity.toOption match {
+      case Some(entity) => entity.data.asString contains (part)
+      case None => false
+    }
+  }
 }
