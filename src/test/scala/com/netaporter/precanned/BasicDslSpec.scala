@@ -73,9 +73,9 @@ class BasicDslSpec
     res.entity.toOption.value.asString should equal("""{"error": "animals not found"}""")
   }
 
-  "post request non empty content " should "match" in {
+  "post request non empty content " should "match exactly" in {
     val postContent: String = """ {"name":"gorilla gustav"} """
-    animalApi.expect(post, path("/animals"), content(postContent)).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
+    animalApi.expect(post, path("/animals"), exactContent(postContent)).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
 
     val resF = pipeline(Post("http://127.0.0.1:8765/animals", postContent))
     val res = Await.result(resF, dur)
@@ -84,11 +84,22 @@ class BasicDslSpec
   }
 
   "post request empty content " should "match" in {
-    animalApi.expect(post, path("/animals"), content()).andRespondWith(entity(HttpEntity("""{"error":"name not provided" """)))
+    animalApi.expect(post, path("/animals"), exactContent()).andRespondWith(entity(HttpEntity("""{"error":"name not provided" """)))
 
     val resF = pipeline(Post("http://127.0.0.1:8765/animals"))
     val res = Await.result(resF, dur)
 
     res.entity.toOption.value.asString should equal("""{"error":"name not provided" """)
   }
+
+  "post request non empty content " should "match partially" in {
+    val postContent: String = """ {"name":"gorilla gustav"} """
+    animalApi.expect(post, path("/animals"), containsContent("gorilla gustav")).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
+
+    val resF = pipeline(Post("http://127.0.0.1:8765/animals", postContent))
+    val res = Await.result(resF, dur)
+
+    res.entity.toOption.value.asString should equal("""{"record":"created" """)
+  }
+
 }
