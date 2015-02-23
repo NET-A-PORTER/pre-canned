@@ -15,12 +15,12 @@ val spray = "1.3.1"
 
 libraryDependencies ++=
   "com.typesafe.akka" %% "akka-actor" % akka ::
-  "io.spray" % "spray-can" % spray ::
-  "io.spray" % "spray-http" % spray ::
+  "io.spray" %% "spray-can" % spray ::
+  "io.spray" %% "spray-http" % spray ::
   Nil
 
 libraryDependencies ++=
-  "io.spray" % "spray-client" % spray % "test" ::
+  "io.spray" %% "spray-client" % spray % "test" ::
   "com.typesafe.akka" %% "akka-testkit" % akka % "test" ::
   "org.scalatest" %% "scalatest" % "2.2.4" % "test" ::
   Nil
