@@ -2,13 +2,15 @@ organization := "com.netaporter"
 
 version := "0.0.4"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.5"
+
+crossScalaVersions := Seq(scalaVersion.value, "2.10.4")
 
 name := "pre-canned"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
-val akka = "2.3.0"
+val akka = "2.3.9"
 val spray = "1.3.1"
 
 libraryDependencies ++=
@@ -20,7 +22,7 @@ libraryDependencies ++=
 libraryDependencies ++=
   "io.spray" % "spray-client" % spray % "test" ::
   "com.typesafe.akka" %% "akka-testkit" % akka % "test" ::
-  "org.scalatest" %% "scalatest" % "2.0" % "test" ::
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test" ::
   Nil
 
 scalariformSettings
