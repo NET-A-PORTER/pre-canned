@@ -1,6 +1,6 @@
 organization := "com.netaporter"
 
-version := "0.0.4"
+version := "0.0.5-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
