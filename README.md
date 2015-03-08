@@ -36,6 +36,8 @@ animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
          .andRespondWith(resource("/responses/giraffe.json"))
 ```
 
+`resource("example.json")` will look for files in `src/main/resources/example.json` or `src/test/resources/example.json`
+
 ### fancy
 
 ```scala
