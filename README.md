@@ -1,7 +1,7 @@
 Pre-canned
 ==========
 
-[![Build Status](https://travis-ci.org/NET-A-PORTER/pre-canned.png?branch=master)](https://travis-ci.org/NET-A-PORTER/pre-canned)
+[![Build Status](https://travis-ci.org/NET-A-PORTER/pre-canned.svg?branch=0.0.5)](https://travis-ci.org/NET-A-PORTER/pre-canned)
 
 Mocking HTTP services on [spray can](http://spray.io) for integration testing
 
