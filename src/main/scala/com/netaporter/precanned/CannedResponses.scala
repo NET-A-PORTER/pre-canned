@@ -1,7 +1,6 @@
 package com.netaporter.precanned
 
 import spray.http.{ HttpEntity, ContentType, HttpHeader, StatusCode }
-import spray.http.HttpHeaders.`Content-Type`
 import scala.io.Source
 
 trait CannedResponses {
@@ -11,8 +10,8 @@ trait CannedResponses {
   def header(h: HttpHeader): Precanned = r =>
     r.copy(headers = h :: r.headers)
 
-  def contentType(c: ContentType) =
-    header(`Content-Type`(c))
+  def contentType(c: ContentType): Precanned = r =>
+    r.mapEntity { e => HttpEntity(c, e.data) }
 
   def entity(e: HttpEntity): Precanned = r =>
     r.withEntity(e)

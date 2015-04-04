@@ -3,8 +3,10 @@ package com.netaporter.precanned
 import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike }
 import com.netaporter.precanned.dsl.fancy._
 import spray.client.pipelining._
+import spray.http.HttpHeaders._
 import scala.concurrent.Await
 import spray.http.StatusCodes._
+import spray.http.ContentTypes._
 
 class FancyDslSpec
     extends FlatSpecLike
@@ -27,6 +29,15 @@ class FancyDslSpec
     val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
+  }
+
+  "contentType CannedResponse" should "set Content-Type header" in {
+    animalApi expect path("/animals") and respond using resource("/responses/animals.json") and contentType(`application/json`) end()
+
+    val resF = pipeline(Get("http://127.0.0.1:8766/animals"))
+    val res = Await.result(resF, dur)
+
+    res.header[`Content-Type`].get.value should equal("application/json; charset=UTF-8")
   }
 
   "several expectation" should "work together" in {
