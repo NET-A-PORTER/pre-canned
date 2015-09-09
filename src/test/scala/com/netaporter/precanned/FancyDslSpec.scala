@@ -1,7 +1,7 @@
 package com.netaporter.precanned
 
-import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike }
 import com.netaporter.precanned.dsl.fancy._
+import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike }
 import spray.client.pipelining._
 import spray.http.HttpHeaders._
 import scala.concurrent.Await
@@ -21,6 +21,15 @@ class FancyDslSpec
 
   after { animalApi.clearExpectations }
   override def afterAll() { system.shutdown() }
+
+  "query expectation" should "match in any order" in {
+    animalApi expect query ("key1" -> "val1", "key2" -> "val2") and respond using resource("/responses/animals.json") end()
+
+    val resF = pipeline(Get("http://127.0.0.1:8765?key2=val2&key1=val1"))
+    val res = Await.result(resF, dur)
+
+    res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
+  }
 
   "path expectation" should "match path" in {
     animalApi expect path("/animals") and respond using resource("/responses/animals.json") end()

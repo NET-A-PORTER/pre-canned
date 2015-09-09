@@ -20,6 +20,16 @@ class BasicDslSpec
   after { animalApi.clearExpectations }
   override def afterAll() { system.shutdown() }
 
+  "query expectation" should "match in any order" in {
+    animalApi.expect(query("key1" -> "val1", "key2" -> "val2"))
+      .andRespondWith(resource("/responses/animals.json"))
+
+    val resF = pipeline(Get("http://127.0.0.1:8765?key2=val2&key1=val1"))
+    val res = Await.result(resF, dur)
+
+    res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
+  }
+
   "path expectation" should "match path" in {
     animalApi.expect(path("/animals"))
       .andRespondWith(resource("/responses/animals.json"))
