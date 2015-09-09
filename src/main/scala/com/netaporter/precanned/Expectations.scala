@@ -35,8 +35,10 @@ trait Expectations {
   def uriEndsWith(s: String): Expect = r =>
     r.uri.toString.endsWith(s)
 
-  def query(kvs: (String, String)*): Expect = r =>
-    r.uri.query.filter(kvs.contains).toSet == kvs.toSet
+  def query(kvs: (String, String)*): Expect = r => {
+    val params = r.uri.query.toSet
+    kvs forall params.contains
+  }
 
   def header(hs: HttpHeader*): Expect = r =>
     r.headers.filter(hs.contains) == hs.toList
