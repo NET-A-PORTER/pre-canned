@@ -2,7 +2,6 @@ package com.netaporter.precanned
 
 import spray.http.HttpMethods._
 import spray.http._
-import spray.http.Uri.Query
 
 trait Expectations {
   val get = method(GET)
@@ -37,7 +36,7 @@ trait Expectations {
     r.uri.toString.endsWith(s)
 
   def query(kvs: (String, String)*): Expect = r =>
-    r.uri.query.filter(kvs.contains) == Query(kvs: _*)
+    r.uri.query.filter(kvs.contains).toSet == kvs.toSet
 
   def header(hs: HttpHeader*): Expect = r =>
     r.headers.filter(hs.contains) == hs.toList
