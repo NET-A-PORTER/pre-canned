@@ -42,10 +42,12 @@ object fancy extends Expectations with CannedResponses {
   }
 
   case class Start(mock: ActorRef) extends MockDsl {
-    def bind(port: Int)(implicit as: ActorSystem, t: Timeout = 5.seconds) = {
-      val bindFuture = IO(Http) ? Http.Bind(mock, "127.0.0.1", port = port)
+
+    def bind(port: Int, interface: String = "127.0.0.1")(implicit as: ActorSystem, t: Timeout = 5.seconds): BindInProgress = {
+      val bindFuture = IO(Http) ? Http.Bind(mock, interface, port = port)
       BindInProgress(mock, bindFuture.mapTo[Http.Bound], t)
     }
+
   }
 
   case class BindInProgress(mock: ActorRef, bind: Future[Http.Bound], t: Timeout) extends MockDsl {
