@@ -1,18 +1,17 @@
 package com.netaporter.precanned.dsl
 
-import akka.actor.{ ActorSystem, Props, ActorRefFactory, ActorRef }
-import com.netaporter.precanned.HttpServerMock.{ Delay, ClearExpectations, PrecannedResponse }
-import Function.chain
+import akka.actor.{ ActorRef, ActorRefFactory, ActorSystem, Props }
 import akka.io.IO
-import spray.can.Http
-import com.netaporter.precanned._
-import spray.http.HttpResponse
-import scala.concurrent.{ Await, Future }
-import akka.util.Timeout
-import scala.concurrent.duration._
 import akka.pattern.ask
+import akka.util.Timeout
+import com.netaporter.precanned.HttpServerMock.{ ClearExpectations, Delay, PrecannedResponse }
+import com.netaporter.precanned._
+import spray.can.Http
+import spray.http.HttpResponse
 
-import scala.util.{ Failure, Success }
+import scala.Function.chain
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
 
 object basic extends Expectations with CannedResponses {
 
@@ -52,14 +51,12 @@ object basic extends Expectations with CannedResponses {
 
   case class MockExpects(mock: ActorRef, expects: Seq[Expect]) {
     def andRespondWith(pcs: Precanned*): MockExpects = {
-      implicit val t = Timeout(100.millis)
-      mock ? PrecannedResponse(r => expects.forall(_.apply(r)), chain(pcs)(HttpResponse()))
+      mock ! PrecannedResponse(r => expects.forall(_.apply(r)), chain(pcs)(HttpResponse()))
       this
     }
 
     def andRespondAfter(delay: FiniteDuration): MockExpects = {
-      implicit val t = Timeout(100.millis)
-      mock ? Delay(delay)
+      mock ! Delay(delay)
       this
     }
   }
