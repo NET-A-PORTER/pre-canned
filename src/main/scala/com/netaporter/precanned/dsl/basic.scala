@@ -57,7 +57,7 @@ object basic extends Expectations with CannedResponses {
       this
     }
 
-    def andRespondAfter(delay: Duration): MockExpects = {
+    def andRespondAfter(delay: FiniteDuration): MockExpects = {
       implicit val t = Timeout(100.millis)
       mock ? Delay(delay)
       this
