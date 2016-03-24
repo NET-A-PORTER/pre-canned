@@ -33,7 +33,7 @@ import com.netaporter.precanned.dsl.basic._
 val animalApi = httpServerMock(system).bind(8765).block
 
 animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
-         .andRespondWith(resource("/responses/giraffe.json"))
+  .andRespondWith(resource("/responses/giraffe.json"))
 ```
 
 `resource("example.json")` will look for files in `src/main/resources/example.json` or `src/test/resources/example.json`
@@ -49,4 +49,55 @@ animalApi expect
   get and path("/animals") and query("name" -> "giraffe") and
 respond using
   resource("/responses/giraffe.json") end()
+```
+
+### Adding artificial latency
+
+You can add an artificial latency with `delay()`. For example, adding a 5 second delay:
+
+#### basic DSL
+
+```scala
+import scala.concurrent.duration._
+
+animalApi.expect(get, path("/animals"))
+  .andRespondWith(resource("/responses/giraffe.json"), delay(5.seconds))
+```
+
+#### fancy DSL
+
+```scala
+import scala.concurrent.duration._
+
+animalApi expect
+  get and path("/animals") and
+respond using
+  resource("/responses/giraffe.json") and delay(5.seconds) end()
+```
+
+### Blocking until expectations have been added
+
+Normally, when you use the DSL, expectations are added asynchronously.
+To block until an expectation is successfully added, use `blockUpTo = duration`
+as shown in the examples below. This will return as soon the expectation has
+been added, or the `blockFor` has been reached, whichever is sooner.
+
+#### basic DSL
+
+```scala
+import scala.concurrent.duration._
+
+animalApi.expect(get, path("/animals"))
+  .andRespondWith(resource("/responses/giraffe.json"))(blockUpTo = 5.seconds)
+```
+
+#### fancy DSL
+
+```scala
+import scala.concurrent.duration._
+
+animalApi expect
+  get and path("/animals") and
+respond using
+  resource("/responses/giraffe.json") end(blockUpTo = 5.seconds)
 ```

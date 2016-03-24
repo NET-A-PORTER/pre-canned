@@ -6,6 +6,7 @@ import spray.client.pipelining._
 import spray.http.HttpEntity
 import scala.concurrent.Await
 import spray.http.StatusCodes._
+import scala.concurrent.duration._
 
 class BasicDslSpec
     extends FlatSpecLike
@@ -15,16 +16,17 @@ class BasicDslSpec
     with OptionValues
     with BaseSpec {
 
+  val port = 8765
   val animalApi = httpServerMock(system).bind(8765).block
 
-  after { animalApi.clearExpectations }
+  after { animalApi.clearExpectations() }
   override def afterAll() { system.shutdown() }
 
   "query expectation" should "match in any order" in {
     animalApi.expect(query("key1" -> "val1", "key2" -> "val2"))
       .andRespondWith(resource("/responses/animals.json"))
 
-    val resF = pipeline(Get("http://127.0.0.1:8765?key2=val2&key1=val1"))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port?key2=val2&key1=val1"))
     val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
@@ -34,7 +36,7 @@ class BasicDslSpec
     animalApi.expect(path("/animals"))
       .andRespondWith(resource("/responses/animals.json"))
 
-    val resF = pipeline(Get("http://127.0.0.1:8765/animals"))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
@@ -44,7 +46,7 @@ class BasicDslSpec
     animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
       .andRespondWith(resource("/responses/giraffe.json"))
 
-    val resF = pipeline(Get("http://127.0.0.1:8765/animals?name=giraffe"))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port/animals?name=giraffe"))
     val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""{"name": "giraffe"}""")
@@ -57,7 +59,7 @@ class BasicDslSpec
     animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
       .andRespondWith(resource("/responses/giraffe.json"))
 
-    val resF = pipeline(Get("http://127.0.0.1:8765/animals?name=giraffe"))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port/animals?name=giraffe"))
     val res = Await.result(resF, dur)
 
     res.entity.asString should equal("""[{"name": "rhino"}, {"name": "giraffe"}, {"name": "tiger"}]""")
@@ -66,7 +68,7 @@ class BasicDslSpec
   "unmatched requests" should "return 404" in {
     animalApi.expect(get, path("/animals")).andRespondWith(resource("/responses/animals.json"))
 
-    val resF = pipeline(Get("http://127.0.0.1:8765/hotdogs"))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port/hotdogs"))
     val res = Await.result(resF, dur)
 
     res.status should equal(NotFound)
@@ -76,7 +78,7 @@ class BasicDslSpec
 
     animalApi.expect(get, path("/animals")).andRespondWith(status(404), entity(HttpEntity("""{"error": "animals not found"}""")))
 
-    val resF = pipeline(Get("http://127.0.0.1:8765/animals"))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
 
     res.status should equal(NotFound)
@@ -87,7 +89,7 @@ class BasicDslSpec
     val postContent: String = """ {"name":"gorilla gustav"} """
     animalApi.expect(post, path("/animals"), exactContent(postContent)).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
 
-    val resF = pipeline(Post("http://127.0.0.1:8765/animals", postContent))
+    val resF = pipeline(Post(s"http://127.0.0.1:$port/animals", postContent))
     val res = Await.result(resF, dur)
 
     res.entity.toOption.value.asString should equal("""{"record":"created" """)
@@ -96,7 +98,7 @@ class BasicDslSpec
   "post request empty content " should "match" in {
     animalApi.expect(post, path("/animals"), exactContent()).andRespondWith(entity(HttpEntity("""{"error":"name not provided" """)))
 
-    val resF = pipeline(Post("http://127.0.0.1:8765/animals"))
+    val resF = pipeline(Post(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
 
     res.entity.toOption.value.asString should equal("""{"error":"name not provided" """)
@@ -106,10 +108,20 @@ class BasicDslSpec
     val postContent: String = """ {"name":"gorilla gustav"} """
     animalApi.expect(post, path("/animals"), containsContent("gorilla gustav")).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
 
-    val resF = pipeline(Post("http://127.0.0.1:8765/animals", postContent))
+    val resF = pipeline(Post(s"http://127.0.0.1:$port/animals", postContent))
     val res = Await.result(resF, dur)
 
     res.entity.toOption.value.asString should equal("""{"record":"created" """)
   }
 
+  "a delay" should "cause the response to be delayed" in {
+    animalApi.expect(get, path("/animals")).andRespondWith(status(200), delay(5.seconds))
+    val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
+
+    Thread.sleep(4000l)
+    resF.isCompleted should equal(false)
+
+    val res = Await.result(resF, dur)
+    res.status.intValue should equal(200)
+  }
 }

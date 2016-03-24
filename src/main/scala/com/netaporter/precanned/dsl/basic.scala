@@ -4,10 +4,9 @@ import akka.actor.{ ActorRef, ActorRefFactory, ActorSystem, Props }
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import com.netaporter.precanned.HttpServerMock.{ ClearExpectations, Delay, PrecannedResponse }
+import com.netaporter.precanned.HttpServerMock._
 import com.netaporter.precanned._
 import spray.can.Http
-import spray.http.HttpResponse
 
 import scala.Function.chain
 import scala.concurrent.duration._
@@ -25,8 +24,11 @@ object basic extends Expectations with CannedResponses {
 
     def expect(es: Expect*) = MockExpects(mock, es)
 
-    def clearExpectations = {
-      mock ! ClearExpectations
+    def clearExpectations(blockUpTo: FiniteDuration = Duration.Zero) = {
+      val clearing = mock.ask(ClearExpectations)(Timeout(blockUpTo))
+      if (blockUpTo > Duration.Zero) {
+        Await.result(clearing, blockUpTo)
+      }
       this
     }
   }
@@ -50,14 +52,12 @@ object basic extends Expectations with CannedResponses {
   case class BoundComplete(mock: ActorRef) extends MockDsl
 
   case class MockExpects(mock: ActorRef, expects: Seq[Expect]) {
-    def andRespondWith(pcs: Precanned*): MockExpects = {
-      mock ! PrecannedResponse(r => expects.forall(_.apply(r)), chain(pcs)(HttpResponse()))
-      this
-    }
-
-    def andRespondAfter(delay: FiniteDuration): MockExpects = {
-      mock ! Delay(delay)
-      this
+    def andRespondWith(pcs: Precanned*)(blockUpTo: FiniteDuration = Duration.Zero): Unit = {
+      val expectAndRespond = ExpectAndRespondWith(r => expects.forall(_.apply(r)), chain(pcs)(PrecannedResponse.empty))
+      val expectInProgress = mock.ask(expectAndRespond)(Timeout(blockUpTo))
+      if (blockUpTo > Duration.Zero) {
+        Await.result(expectInProgress, blockUpTo)
+      }
     }
   }
 }

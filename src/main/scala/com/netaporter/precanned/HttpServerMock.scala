@@ -9,52 +9,49 @@ import spray.can.Http.{ Connected, Register }
 import scala.concurrent.duration._
 
 object HttpServerMock {
-  case class PrecannedResponse(expects: Expect, response: HttpResponse)
-  case object ClearExpectations
-  case class Delay(delay: FiniteDuration)
+  case class PrecannedResponse(response: HttpResponse, delay: FiniteDuration)
+  object PrecannedResponse {
+    val empty = PrecannedResponse(HttpResponse(), Duration.Zero)
+  }
+
+  case class ExpectAndRespondWith(expects: Expect, respondWith: PrecannedResponse)
   case object PrecannedResponseAdded
-  case object DelayAdded
-  case class DelayedHttpRequest(h: HttpRequest, replyTo: ActorRef)
+
+  case object ClearExpectations
+  case object ExpectationsCleared
 }
 
 class HttpServerMock extends Actor {
 
-  var responses = Vector.empty[PrecannedResponse]
-  var delay: Option[FiniteDuration] = None
+  import context.dispatcher
+
+  var responses = Vector.empty[ExpectAndRespondWith]
+
+  def responseFor(request: HttpRequest) =
+    responses.find(_.expects(request)).map(_.respondWith)
 
   def receive = {
-    case p: PrecannedResponse =>
-      responses :+= p
+    case expectAndRespond: ExpectAndRespondWith =>
+      responses :+= expectAndRespond
       sender ! PrecannedResponseAdded
 
-    case d: Delay =>
-      delay = Some(d.delay)
-      sender ! DelayAdded
-
     case ClearExpectations =>
-      responses = Vector.empty[PrecannedResponse]
+      responses = Vector.empty
+      sender ! ExpectationsCleared
 
     case Connected(_, _) =>
       sender ! Register(self)
 
-    case dh: DelayedHttpRequest =>
-      responses.find(_.expects(dh.h)) match {
-        case Some(pcr) =>
-          dh.replyTo ! pcr.response
-        case None =>
-          dh.replyTo ! HttpResponse(status = NotFound)
-      }
-
-    case h: HttpRequest =>
-      val replyTo = sender()
-      delay match {
-        case Some(delay) =>
-          import scala.concurrent.ExecutionContext.Implicits.global
-          context.system.scheduler.scheduleOnce(delay) {
-            self ! DelayedHttpRequest(h, replyTo)
+    case req: HttpRequest =>
+      responseFor(req) match {
+        case Some(PrecannedResponse(response, delay)) =>
+          if (delay > Duration.Zero) {
+            context.system.scheduler.scheduleOnce(delay, sender, response)
+          } else {
+            sender ! response
           }
         case None =>
-          self ! DelayedHttpRequest(h, replyTo)
+          sender ! HttpResponse(status = NotFound)
       }
   }
 }
