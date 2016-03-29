@@ -1,5 +1,6 @@
 package com.netaporter.precanned
 
+import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
 import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike, OptionValues }
 import dsl.basic._
 import spray.client.pipelining._
@@ -24,7 +25,7 @@ class BasicDslSpec
 
   "query expectation" should "match in any order" in {
     animalApi.expect(query("key1" -> "val1", "key2" -> "val2"))
-      .andRespondWith(resource("/responses/animals.json"))
+      .andRespondWith(resource("/responses/animals.json")).blockFor(3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$port?key2=val2&key1=val1"))
     val res = Await.result(resF, dur)
@@ -44,7 +45,7 @@ class BasicDslSpec
 
   "several expectation" should "work together" in {
     animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
-      .andRespondWith(resource("/responses/giraffe.json"))
+      .andRespondWith(resource("/responses/giraffe.json")).blockFor(3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$port/animals?name=giraffe"))
     val res = Await.result(resF, dur)
@@ -54,7 +55,7 @@ class BasicDslSpec
 
   "earlier expectations" should "take precedence" in {
     animalApi.expect(get, path("/animals"))
-      .andRespondWith(resource("/responses/animals.json"))
+      .andRespondWith(resource("/responses/animals.json")).blockFor(3.seconds)
 
     animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
       .andRespondWith(resource("/responses/giraffe.json"))
@@ -66,7 +67,7 @@ class BasicDslSpec
   }
 
   "unmatched requests" should "return 404" in {
-    animalApi.expect(get, path("/animals")).andRespondWith(resource("/responses/animals.json"))
+    animalApi.expect(get, path("/animals")).andRespondWith(resource("/responses/animals.json")).blockFor(3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$port/hotdogs"))
     val res = Await.result(resF, dur)
@@ -76,7 +77,7 @@ class BasicDslSpec
 
   "custom status code with entity" should "return as expected" in {
 
-    animalApi.expect(get, path("/animals")).andRespondWith(status(404), entity(HttpEntity("""{"error": "animals not found"}""")))
+    animalApi.expect(get, path("/animals")).andRespondWith(status(404), entity(HttpEntity("""{"error": "animals not found"}"""))).blockFor(3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
@@ -87,7 +88,7 @@ class BasicDslSpec
 
   "post request non empty content " should "match exactly" in {
     val postContent: String = """ {"name":"gorilla gustav"} """
-    animalApi.expect(post, path("/animals"), exactContent(postContent)).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
+    animalApi.expect(post, path("/animals"), exactContent(postContent)).andRespondWith(entity(HttpEntity("""{"record":"created" """))).blockFor(3.seconds)
 
     val resF = pipeline(Post(s"http://127.0.0.1:$port/animals", postContent))
     val res = Await.result(resF, dur)
@@ -96,7 +97,7 @@ class BasicDslSpec
   }
 
   "post request empty content " should "match" in {
-    animalApi.expect(post, path("/animals"), exactContent()).andRespondWith(entity(HttpEntity("""{"error":"name not provided" """)))
+    animalApi.expect(post, path("/animals"), exactContent()).andRespondWith(entity(HttpEntity("""{"error":"name not provided" """))).blockFor(3.seconds)
 
     val resF = pipeline(Post(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
@@ -106,7 +107,7 @@ class BasicDslSpec
 
   "post request non empty content " should "match partially" in {
     val postContent: String = """ {"name":"gorilla gustav"} """
-    animalApi.expect(post, path("/animals"), containsContent("gorilla gustav")).andRespondWith(entity(HttpEntity("""{"record":"created" """)))
+    animalApi.expect(post, path("/animals"), containsContent("gorilla gustav")).andRespondWith(entity(HttpEntity("""{"record":"created" """))).blockFor(3.seconds)
 
     val resF = pipeline(Post(s"http://127.0.0.1:$port/animals", postContent))
     val res = Await.result(resF, dur)
@@ -115,7 +116,7 @@ class BasicDslSpec
   }
 
   "a delay" should "cause the response to be delayed" in {
-    animalApi.expect(get, path("/animals")).andRespondWith(status(200), delay(5.seconds))
+    animalApi.expect(get, path("/animals")).andRespondWith(status(200), delay(5.seconds)).blockFor(3.seconds)
     val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
 
     Thread.sleep(4000l)
@@ -123,5 +124,10 @@ class BasicDslSpec
 
     val res = Await.result(resF, dur)
     res.status.intValue should equal(200)
+  }
+
+  "blockFor" should "block until the expectation is added and return confirmation" in {
+    val blocked = animalApi.expect(get, path("/animals")).andRespondWith(status(200), delay(5.seconds)).blockFor(3.seconds)
+    blocked should equal(PrecannedResponseAdded)
   }
 }

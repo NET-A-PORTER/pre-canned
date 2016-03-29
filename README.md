@@ -34,6 +34,7 @@ val animalApi = httpServerMock(system).bind(8765).block
 
 animalApi.expect(get, path("/animals"), query("name" -> "giraffe"))
   .andRespondWith(resource("/responses/giraffe.json"))
+  .blockUpTo(5.seconds)
 ```
 
 `resource("example.json")` will look for files in `src/main/resources/example.json` or `src/test/resources/example.json`
@@ -88,10 +89,13 @@ been added, or the `blockFor` has been reached, whichever is sooner.
 import scala.concurrent.duration._
 
 animalApi.expect(get, path("/animals"))
-  .andRespondWith(resource("/responses/giraffe.json"))(blockUpTo = 5.seconds)
+  .andRespondWith(resource("/responses/giraffe.json"))
+  .blockUpTo(5.seconds)
 ```
 
 #### fancy DSL
+
+By default the fancy DSL blocks up to 3 seconds, however you can change it like so:
 
 ```scala
 import scala.concurrent.duration._
@@ -100,4 +104,15 @@ animalApi expect
   get and path("/animals") and
 respond using
   resource("/responses/giraffe.json") end(blockUpTo = 5.seconds)
+```
+
+You can disable blocking of adding expectations, like so:
+
+```scala
+import scala.concurrent.duration._
+
+animalApi expect
+  get and path("/animals") and
+respond using
+  resource("/responses/giraffe.json") end(blockUpTo = Duration.Zero)
 ```

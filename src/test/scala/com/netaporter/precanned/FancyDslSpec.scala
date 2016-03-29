@@ -1,5 +1,6 @@
 package com.netaporter.precanned
 
+import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
 import com.netaporter.precanned.dsl.fancy._
 import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike }
 import spray.client.pipelining._
@@ -69,7 +70,7 @@ class FancyDslSpec
     animalApi expect
       get and query("name" -> "giraffe") and
     respond using
-      resource("/responses/giraffe.json") end()
+      resource("/responses/giraffe.json") end(blockUpTo = 3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$port/animals?name=giraffe"))
     val res = Await.result(resF, dur)
@@ -90,7 +91,7 @@ class FancyDslSpec
     animalApi expect
       get and path("/animals") and
     respond using
-      status(200) and delay(5.seconds) end()
+      status(200) and delay(5.seconds) end(blockUpTo = 3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
 
@@ -99,5 +100,25 @@ class FancyDslSpec
 
     val res = Await.result(resF, dur)
     res.status.intValue should equal(200)
+  }
+
+  "blockFor" should "block by default until the expectation is added and return confirmation" in {
+    val blocked =
+      animalApi expect
+        get and path("/animals") and
+      respond using
+        status(200) and delay(5.seconds) end()
+
+    blocked should equal(Some(PrecannedResponseAdded))
+  }
+
+  "No blockFor" should "not block and return immediately with a None" in {
+    val blocked =
+      animalApi expect
+        get and path("/animals") and
+        respond using
+        status(200) and delay(5.seconds) end(blockUpTo = Duration.Zero)
+
+    blocked should equal(None)
   }
 }

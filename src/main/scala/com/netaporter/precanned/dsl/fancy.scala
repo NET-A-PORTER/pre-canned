@@ -22,7 +22,7 @@ object fancy extends Expectations with CannedResponses {
 
     def expect(e: Expect) = MockExpects(e)
 
-    def clearExpectations(blockUpTo: FiniteDuration = Duration.Zero) = {
+    def clearExpectations(blockUpTo: FiniteDuration = 3.seconds) = {
       val clearing = mock.ask(ClearExpectations)(Timeout(blockUpTo))
       if (blockUpTo > Duration.Zero) {
         Await.result(clearing, blockUpTo)
@@ -41,10 +41,12 @@ object fancy extends Expectations with CannedResponses {
 
       def and(also: Precanned) = copy(response = response andThen also)
 
-      def end(blockUpTo: FiniteDuration = Duration.Zero) = {
-        val expectInProgress = mock ? ExpectAndRespondWith(expect, response(PrecannedResponse.empty))
+      def end(blockUpTo: FiniteDuration = 3.seconds): Option[PrecannedResponseAdded.type] = {
+        val expectInProgress = mock.ask(ExpectAndRespondWith(expect, response(PrecannedResponse.empty)))(blockUpTo)
         if (blockUpTo > Duration.Zero) {
-          Await.result(expectInProgress, blockUpTo)
+          Some(Await.result(expectInProgress.mapTo[PrecannedResponseAdded.type], blockUpTo))
+        } else {
+          None
         }
       }
     }
