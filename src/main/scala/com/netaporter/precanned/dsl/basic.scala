@@ -1,17 +1,16 @@
 package com.netaporter.precanned.dsl
 
-import akka.actor.{ ActorSystem, Props, ActorRefFactory, ActorRef }
-import com.netaporter.precanned.HttpServerMock.ClearExpectations
-import Function.chain
+import akka.actor.{ ActorRef, ActorRefFactory, ActorSystem, Props }
 import akka.io.IO
-import spray.can.Http
-import com.netaporter.precanned._
-import spray.http.HttpResponse
-import com.netaporter.precanned.HttpServerMock.PrecannedResponse
-import scala.concurrent.{ Await, Future }
-import akka.util.Timeout
-import scala.concurrent.duration._
 import akka.pattern.ask
+import akka.util.Timeout
+import com.netaporter.precanned.HttpServerMock._
+import com.netaporter.precanned._
+import spray.can.Http
+
+import scala.Function.chain
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
 
 object basic extends Expectations with CannedResponses {
 
@@ -25,8 +24,11 @@ object basic extends Expectations with CannedResponses {
 
     def expect(es: Expect*) = MockExpects(mock, es)
 
-    def clearExpectations = {
-      mock ! ClearExpectations
+    def clearExpectations(blockUpTo: FiniteDuration = 3.seconds) = {
+      val clearing = mock.ask(ClearExpectations)(Timeout(blockUpTo))
+      if (blockUpTo > Duration.Zero) {
+        Await.result(clearing, blockUpTo)
+      }
       this
     }
   }
@@ -50,7 +52,20 @@ object basic extends Expectations with CannedResponses {
   case class BoundComplete(mock: ActorRef) extends MockDsl
 
   case class MockExpects(mock: ActorRef, expects: Seq[Expect]) {
-    def andRespondWith(pcs: Precanned*): Unit =
-      mock ! PrecannedResponse(r => expects.forall(_.apply(r)), chain(pcs)(HttpResponse()))
+    def andRespondWith(pcs: Precanned*): ExpectationAddInProgress = {
+      val expectAndRespond = ExpectAndRespondWith(r => expects.forall(_.apply(r)), chain(pcs)(PrecannedResponse.empty))
+      // 60 seconds is a hack for users who want to use `ExpectationAddInProgress.blockFor`. Would be nice to use their
+      // timeout specified in the method, but we do not have that yet here
+      // Adding an expectation is a fast operation, so it is reasonably safe to assume we will never need to wait longer
+      // 60 seconds for this.
+      val expectInProgress = mock.ask(expectAndRespond)(Timeout(60.seconds)).mapTo[PrecannedResponseAdded.type]
+      ExpectationAddInProgress(expectInProgress)
+    }
+  }
+
+  case class ExpectationAddInProgress(expectInProgress: Future[PrecannedResponseAdded.type]) {
+    def blockFor(blockUpTo: FiniteDuration) = {
+      Await.result(expectInProgress, blockUpTo)
+    }
   }
 }

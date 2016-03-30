@@ -1,8 +1,12 @@
 ---
 language: scala
-script: "sbt test"
+script: "sbt ++$TRAVIS_SCALA_VERSION test"
+
 jdk:
-- oraclejdk7
-- openjdk7
+  - oraclejdk8
+
 scala:
-- 2.10.3
+  - 2.10.5
+  - 2.11.7
+
+sudo: false # Enable new travis container-based infrastructure

@@ -4,9 +4,7 @@ import akka.actor.{ ActorSystem, ActorRef, Props, ActorRefFactory }
 import com.netaporter.precanned._
 import akka.io.IO
 import spray.can.Http
-import com.netaporter.precanned.HttpServerMock.ClearExpectations
-import spray.http._
-import com.netaporter.precanned.HttpServerMock.PrecannedResponse
+import com.netaporter.precanned.HttpServerMock._
 import akka.util.Timeout
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
@@ -24,20 +22,33 @@ object fancy extends Expectations with CannedResponses {
 
     def expect(e: Expect) = MockExpects(e)
 
-    def clearExpectations = {
-      mock ! ClearExpectations
+    def clearExpectations(blockUpTo: FiniteDuration = 3.seconds) = {
+      val clearing = mock.ask(ClearExpectations)(Timeout(blockUpTo))
+      if (blockUpTo > Duration.Zero) {
+        Await.result(clearing, blockUpTo)
+      }
       this
     }
 
     case class MockExpects(expect: Expect) {
       def and(also: Expect) = MockExpects(x => expect(x) && also(x))
+
       def and(also: RespondWord) = MockExpectsAndResponds(expect, identity)
     }
 
     case class MockExpectsAndResponds(expect: Expect, response: Precanned) extends CannedResponses {
       def using(also: Precanned) = and(also)
+
       def and(also: Precanned) = copy(response = response andThen also)
-      def end() = mock ! PrecannedResponse(expect, response(HttpResponse()))
+
+      def end(blockUpTo: FiniteDuration = 3.seconds): Option[PrecannedResponseAdded.type] = {
+        val expectInProgress = mock.ask(ExpectAndRespondWith(expect, response(PrecannedResponse.empty)))(blockUpTo)
+        if (blockUpTo > Duration.Zero) {
+          Some(Await.result(expectInProgress.mapTo[PrecannedResponseAdded.type], blockUpTo))
+        } else {
+          None
+        }
+      }
     }
   }
 
