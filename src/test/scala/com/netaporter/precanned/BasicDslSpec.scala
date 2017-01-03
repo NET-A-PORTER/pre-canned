@@ -130,4 +130,15 @@ class BasicDslSpec
     val blocked = animalApi.expect(get, path("/animals")).andRespondWith(status(200), delay(5.seconds)).blockFor(3.seconds)
     blocked should equal(PrecannedResponseAdded)
   }
+
+  "server mock" should "be bound to some available port" in {
+    val availablePortApi = httpServerMock(system).bind().block
+    val availablePort = availablePortApi.bound.localAddress.getPort
+    availablePortApi.expect(get, path("/status")).andRespondWith(entity("OK")).blockFor(3.seconds)
+
+    val resF = pipeline(Get(s"http://127.0.0.1:$availablePort/status"))
+    val res = Await.result(resF, dur)
+
+    res.entity.asString should equal("OK")
+  }
 }

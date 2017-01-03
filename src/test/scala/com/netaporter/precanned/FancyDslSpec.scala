@@ -2,7 +2,7 @@ package com.netaporter.precanned
 
 import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
 import com.netaporter.precanned.dsl.fancy._
-import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike }
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, Matchers }
 import spray.client.pipelining._
 import spray.http.HttpHeaders._
 import scala.concurrent.Await
@@ -120,5 +120,16 @@ class FancyDslSpec
         status(200) and delay(5.seconds) end(blockUpTo = Duration.Zero)
 
     blocked should equal(None)
+  }
+
+  "server mock" should "be bound to some available port" in {
+    val availablePortApi = httpServerMock(system).bind().block
+    val availablePort = availablePortApi.bound.localAddress.getPort
+    availablePortApi expect get and path("/status") and respond using entity("OK") end()
+
+    val resF = pipeline(Get(s"http://127.0.0.1:$availablePort/status"))
+    val res = Await.result(resF, dur)
+
+    res.entity.asString should equal("OK")
   }
 }
