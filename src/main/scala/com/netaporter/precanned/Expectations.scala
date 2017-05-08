@@ -1,10 +1,10 @@
 package com.netaporter.precanned
 
-import spray.http.HttpMethods._
-import spray.http.Uri.Query
-import spray.http._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model.Uri.Query
 
-trait Expectations {
+trait Expectations extends StrictHttpEntityOps {
   val get = method(GET)
   val put = method(PUT)
   val post = method(POST)
@@ -37,27 +37,22 @@ trait Expectations {
     r.uri.toString.endsWith(s)
 
   def query(kvs: (String, String)*): Expect = r => {
-    val params = r.uri.query.toSet
+    val params = r.uri.query().toSet
     kvs forall params.contains
   }
 
   def orderedQuery(kvs: (String, String)*): Expect = r =>
-    r.uri.query.filter(kvs.contains) == Query(kvs: _*)
+    r.uri.query().filter(kvs.contains) == Query(kvs: _*)
 
   def header(hs: HttpHeader*): Expect = r =>
     r.headers.filter(hs.contains) == hs.toList
 
   def exactContent(content: String = null): Expect = r => {
-    r.entity.toOption match {
-      case Some(entity) => entity.data.asString == content
-      case None => content == null
-    }
+    val requestEntityData = r.entity.asString
+    if (content == null) requestEntityData.isEmpty
+    else requestEntityData == content
   }
 
-  def containsContent(part: String): Expect = r => {
-    r.entity.toOption match {
-      case Some(entity) => entity.data.asString contains (part)
-      case None => false
-    }
-  }
+  def containsContent(part: String): Expect = r =>
+    r.entity.asString contains part
 }

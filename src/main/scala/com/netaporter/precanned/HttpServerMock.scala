@@ -1,11 +1,16 @@
 package com.netaporter.precanned
 
-import akka.actor.{ ActorRef, Actor }
-import spray.http.{ StatusCodes, HttpRequest, HttpResponse }
+import akka.actor.{ Actor, ActorRef, ActorSystem }
+import akka.pattern.ask
+import akka.http.scaladsl.model._
 import com.netaporter.precanned.HttpServerMock._
 import StatusCodes._
-import spray.can.Http.{ Connected, Register }
+import akka.http.scaladsl.Http
+import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.scaladsl.Flow
+import akka.util.Timeout
 
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 
 object HttpServerMock {
@@ -19,6 +24,23 @@ object HttpServerMock {
 
   case object ClearExpectations
   case object ExpectationsCleared
+
+  def handleRequest(
+    mockRef: ActorRef,
+    requestToStrictDuration: FiniteDuration = 5.seconds,
+    //you can't pre-can a delayed response with a delay larger than this timeout
+    mockAskTimeout: Timeout = 1.minute)(req: HttpRequest)(
+      implicit ec: ExecutionContext, materializer: Materializer): Future[HttpResponse] = req
+    .toStrict(requestToStrictDuration)
+    .flatMap(mockRef.ask(_)(timeout = mockAskTimeout)).mapTo[HttpResponse]
+
+  def startServer(
+    mockRef: ActorRef, port: Int, interface: String)(implicit system: ActorSystem): Future[Http.ServerBinding] = {
+    implicit val ec: ExecutionContext = system.dispatcher
+    implicit val materializer: Materializer = ActorMaterializer()
+    val handler = Flow[HttpRequest].mapAsyncUnordered(Int.MaxValue)(handleRequest(mockRef))
+    Http().bindAndHandle(port = port, interface = interface, handler = handler)
+  }
 }
 
 class HttpServerMock extends Actor {
@@ -38,9 +60,6 @@ class HttpServerMock extends Actor {
     case ClearExpectations =>
       responses = Vector.empty
       sender ! ExpectationsCleared
-
-    case Connected(_, _) =>
-      sender ! Register(self)
 
     case req: HttpRequest =>
       responseFor(req) match {

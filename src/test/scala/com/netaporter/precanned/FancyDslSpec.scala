@@ -3,11 +3,10 @@ package com.netaporter.precanned
 import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
 import com.netaporter.precanned.dsl.fancy._
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, Matchers }
-import spray.client.pipelining._
-import spray.http.HttpHeaders._
+import akka.http.scaladsl.model.headers._
 import scala.concurrent.Await
-import spray.http.StatusCodes._
-import spray.http.ContentTypes._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.ContentTypes._
 import scala.concurrent.duration._
 
 class FancyDslSpec
@@ -23,7 +22,9 @@ class FancyDslSpec
   val animalApi = httpServerMock(system).bind(port).block
 
   after { animalApi.clearExpectations() }
-  override def afterAll() { system.shutdown() }
+  override def afterAll() {
+    Await.result(system.terminate(), Duration.Inf)
+  }
 
   "query expectation" should "match in any order" in {
     animalApi expect query ("key1" -> "val1", "key2" -> "val2") and respond using resource("/responses/animals.json") end()
@@ -49,7 +50,7 @@ class FancyDslSpec
     val resF = pipeline(Get(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
 
-    res.header[`Content-Type`].get.value should equal("application/json; charset=UTF-8")
+    res.header[`Content-Type`].get.value should equal("application/json")
   }
 
   "several expectation" should "work together" in {
@@ -124,7 +125,7 @@ class FancyDslSpec
 
   "server mock" should "be bound to some available port" in {
     val availablePortApi = httpServerMock(system).bind().block
-    val availablePort = availablePortApi.bound.localAddress.getPort
+    val availablePort = availablePortApi.binding.localAddress.getPort
     availablePortApi expect get and path("/status") and respond using entity("OK") end()
 
     val resF = pipeline(Get(s"http://127.0.0.1:$availablePort/status"))

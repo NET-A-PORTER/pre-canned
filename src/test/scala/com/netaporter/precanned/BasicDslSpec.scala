@@ -1,12 +1,12 @@
 package com.netaporter.precanned
 
+import akka.http.scaladsl.model.{ HttpEntity, StatusCodes }
+import StatusCodes._
 import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
-import org.scalatest.{ BeforeAndAfterAll, Matchers, BeforeAndAfter, FlatSpecLike, OptionValues }
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, Matchers, OptionValues }
 import dsl.basic._
-import spray.client.pipelining._
-import spray.http.HttpEntity
+
 import scala.concurrent.Await
-import spray.http.StatusCodes._
 import scala.concurrent.duration._
 
 class BasicDslSpec
@@ -21,7 +21,9 @@ class BasicDslSpec
   val animalApi = httpServerMock(system).bind(8765).block
 
   after { animalApi.clearExpectations() }
-  override def afterAll() { system.shutdown() }
+  override def afterAll() {
+    Await.result(system.terminate(), Duration.Inf)
+  }
 
   "query expectation" should "match in any order" in {
     animalApi.expect(query("key1" -> "val1", "key2" -> "val2"))
@@ -72,7 +74,7 @@ class BasicDslSpec
     val resF = pipeline(Get(s"http://127.0.0.1:$port/hotdogs"))
     val res = Await.result(resF, dur)
 
-    res.status should equal(NotFound)
+    res.status should equal(StatusCodes.NotFound)
   }
 
   "custom status code with entity" should "return as expected" in {
@@ -83,7 +85,7 @@ class BasicDslSpec
     val res = Await.result(resF, dur)
 
     res.status should equal(NotFound)
-    res.entity.toOption.value.asString should equal("""{"error": "animals not found"}""")
+    res.entity.asString should equal("""{"error": "animals not found"}""")
   }
 
   "post request non empty content " should "match exactly" in {
@@ -93,7 +95,7 @@ class BasicDslSpec
     val resF = pipeline(Post(s"http://127.0.0.1:$port/animals", postContent))
     val res = Await.result(resF, dur)
 
-    res.entity.toOption.value.asString should equal("""{"record":"created" """)
+    res.entity.asString should equal("""{"record":"created" """)
   }
 
   "post request empty content " should "match" in {
@@ -102,7 +104,7 @@ class BasicDslSpec
     val resF = pipeline(Post(s"http://127.0.0.1:$port/animals"))
     val res = Await.result(resF, dur)
 
-    res.entity.toOption.value.asString should equal("""{"error":"name not provided" """)
+    res.entity.asString should equal("""{"error":"name not provided" """)
   }
 
   "post request non empty content " should "match partially" in {
@@ -112,7 +114,7 @@ class BasicDslSpec
     val resF = pipeline(Post(s"http://127.0.0.1:$port/animals", postContent))
     val res = Await.result(resF, dur)
 
-    res.entity.toOption.value.asString should equal("""{"record":"created" """)
+    res.entity.asString should equal("""{"record":"created" """)
   }
 
   "a delay" should "cause the response to be delayed" in {
@@ -133,7 +135,7 @@ class BasicDslSpec
 
   "server mock" should "be bound to some available port" in {
     val availablePortApi = httpServerMock(system).bind().block
-    val availablePort = availablePortApi.bound.localAddress.getPort
+    val availablePort = availablePortApi.binding.localAddress.getPort
     availablePortApi.expect(get, path("/status")).andRespondWith(entity("OK")).blockFor(3.seconds)
 
     val resF = pipeline(Get(s"http://127.0.0.1:$availablePort/status"))

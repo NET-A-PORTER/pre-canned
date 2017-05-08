@@ -1,6 +1,6 @@
 package com.netaporter.precanned
 
-import spray.http._
+import akka.http.scaladsl.model._
 import scala.concurrent.duration.FiniteDuration
 import scala.io.Source
 
@@ -14,14 +14,14 @@ trait CannedResponses {
   }
 
   def header(h: HttpHeader): Precanned = mapResponse { r =>
-    r.copy(headers = h :: r.headers)
+    r.copy(headers = h +: r.headers)
   }
 
   def contentType(c: ContentType): Precanned = mapResponse { r =>
-    r.mapEntity { e => HttpEntity(c, e.data) }
+    r.mapEntity { e => e.withContentType(c) }
   }
 
-  def entity(e: HttpEntity): Precanned = mapResponse { r =>
+  def entity(e: ResponseEntity): Precanned = mapResponse { r =>
     r.withEntity(e)
   }
 

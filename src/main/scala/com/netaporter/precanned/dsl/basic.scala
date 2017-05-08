@@ -1,12 +1,11 @@
 package com.netaporter.precanned.dsl
 
 import akka.actor.{ ActorRef, ActorRefFactory, ActorSystem, Props }
-import akka.io.IO
+import akka.http.scaladsl.Http
 import akka.pattern.ask
 import akka.util.Timeout
 import com.netaporter.precanned.HttpServerMock._
 import com.netaporter.precanned._
-import spray.can.Http
 
 import scala.Function.chain
 import scala.concurrent.duration._
@@ -35,21 +34,22 @@ object basic extends Expectations with CannedResponses {
 
   case class Start(mock: ActorRef) extends MockDsl {
 
-    def bind(port: Int = 0, interface: String = "127.0.0.1")(implicit as: ActorSystem, t: Timeout = 5.seconds): BindInProgress = {
-      val bindFuture = IO(Http) ? Http.Bind(mock, interface, port = port)
-      BindInProgress(mock, bindFuture.mapTo[Http.Bound], t)
+    def bind(
+      port: Int = 0, interface: String = "127.0.0.1")(implicit as: ActorSystem, t: Timeout = 5.seconds): BindInProgress = {
+      val bindFuture = HttpServerMock.startServer(mock, port, interface)
+      BindInProgress(mock, bindFuture, t)
     }
 
   }
 
-  case class BindInProgress(mock: ActorRef, bind: Future[Http.Bound], t: Timeout) extends MockDsl {
+  case class BindInProgress(mock: ActorRef, bind: Future[Http.ServerBinding], t: Timeout) extends MockDsl {
     def block = {
       val bound = Await.result(bind, t.duration)
       BoundComplete(mock, bound)
     }
   }
 
-  case class BoundComplete(mock: ActorRef, bound: Http.Bound) extends MockDsl
+  case class BoundComplete(mock: ActorRef, binding: Http.ServerBinding) extends MockDsl
 
   case class MockExpects(mock: ActorRef, expects: Seq[Expect]) {
     def andRespondWith(pcs: Precanned*): ExpectationAddInProgress = {
