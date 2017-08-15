@@ -17,7 +17,7 @@ Introduction
 Pre-canned helps you to mock out the HTTP services your application depends on. This can be especially useful
 for your integration testing.
 
-For SBT add the dependency `"io.github.a-fistful-of-code" %% "pre-canned" % "0.1.0" % "test"`
+For SBT add the dependency `"io.github.a-fistful-of-code" %% "pre-canned" % "0.1.1" % "test"`
 
 DSLs
 ----

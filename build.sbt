@@ -44,9 +44,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  releaseStepCommand("publishSigned"),
+  ReleaseStep(releaseStepCommand("publishSigned"), enableCrossBuild = true),
   setNextVersion,
   commitNextVersion,
-  releaseStepCommand("sonatypeReleaseAll"),
+  ReleaseStep(releaseStepCommand("sonatypeReleaseAll"), enableCrossBuild = true),
   pushChanges
 )
