@@ -10,12 +10,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class BasicDslSpec
-    extends FlatSpecLike
-    with Matchers
-    with BeforeAndAfter
-    with BeforeAndAfterAll
-    with OptionValues
-    with BaseSpec {
+  extends FlatSpecLike
+  with Matchers
+  with BeforeAndAfter
+  with BeforeAndAfterAll
+  with OptionValues
+  with BaseSpec {
 
   val port = 8765
   val animalApi = httpServerMock(system).bind(8765).block
