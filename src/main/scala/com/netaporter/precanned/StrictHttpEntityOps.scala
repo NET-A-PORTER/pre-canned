@@ -15,6 +15,8 @@ trait StrictHttpEntityOps {
       strict.contentType match {
         case nonBinary: ContentType.NonBinary =>
           strict.data.decodeString(nonBinary.charset.nioCharset())
+        case _: ContentType.WithMissingCharset =>
+          strict.data.decodeString("UTF-8")
         case binary: ContentType.Binary =>
           sys.error(s"unable to read as a string entity with a binary content type $binary")
       }

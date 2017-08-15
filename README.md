@@ -1,9 +1,15 @@
 Pre-canned
 ==========
 
-[![Build Status](https://travis-ci.org/NET-A-PORTER/pre-canned.svg?branch=0.0.5)](https://travis-ci.org/NET-A-PORTER/pre-canned)
+[![Build Status](https://travis-ci.org/a-fistful-of-code/pre-canned.svg?branch=master)](https://travis-ci.org/a-fistful-of-code/pre-canned)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.a-fistful-of-code/pre-canned_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.a-fistful-of-code/pre-canned_2.11)
 
-Mocking HTTP services on [spray can](http://spray.io) for integration testing
+Mocking HTTP services on [Akka HTTP](http://doc.akka.io/docs/akka-http/current/scala/http)
+for integration testing.
+
+Port of [NET-A-PORTER/pre-canned](https://github.com/NET-A-PORTER/pre-canned)
+from [spray can](http://spray.io) to [Akka HTTP](http://doc.akka.io/docs/akka-http/current/scala/http),
+cross-compiled for Scala 2.11 and 2.12.
 
 Introduction
 ------------
@@ -11,7 +17,7 @@ Introduction
 Pre-canned helps you to mock out the HTTP services your application depends on. This can be especially useful
 for your integration testing.
 
-For SBT add the dependency `"com.netaporter" %% "pre-canned" % "0.0.8" % "test"`
+For SBT add the dependency `"io.github.a-fistful-of-code" %% "pre-canned" % "0.1.0" % "test"`
 
 DSLs
 ----
@@ -23,7 +29,11 @@ Pre-canned currently comes in two flavours:
 
 Help make Pre-canned better and submit a new improved flavour via a PR, or ideas for one in an issue.
 
-There are a basic set of [expectations](https://github.com/NET-A-PORTER/pre-canned/blob/master/src/main/scala/com/netaporter/precanned/Expectations.scala) and [canned responses](https://github.com/NET-A-PORTER/pre-canned/blob/master/src/main/scala/com/netaporter/precanned/CannedResponses.scala). Feel free to contribute more via a PR.
+There are a basic set of
+[expectations](https://github.com/a-fistful-of-code/pre-canned/blob/master/src/main/scala/com/netaporter/precanned/Expectations.scala)
+and
+[canned responses](https://github.com/a-fistful-of-code/pre-canned/blob/master/src/main/scala/com/netaporter/precanned/CannedResponses.scala).
+Feel free to contribute more via a PR.
 
 ### basic
 
