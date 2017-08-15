@@ -1,6 +1,6 @@
-organization := "com.netaporter"
+organization := "io.github.a-fistful-of-code"
 
-version := "0.0.8"
+version := "0.1.0"
 
 val scala211Version = "2.11.11"
 val scala212Version = "2.12.3"
@@ -39,7 +39,7 @@ publishTo <<= version { (v: String) =>
 }
 
 pomExtra := (
-  <url>https://github.com/net-a-porter/pre-canned</url>
+  <url>https://github.com/a-fistful-of-code/pre-canned</url>
     <licenses>
       <license>
         <name>Apache 2</name>
@@ -48,8 +48,8 @@ pomExtra := (
       </license>
     </licenses>
     <scm>
-      <url>git@github.com:net-a-porter/pre-canned.git</url>
-      <connection>scm:git@github.com:net-a-porter/pre-canned.git</connection>
+      <url>git@github.com:a-fistful-of-code/pre-canned.git</url>
+      <connection>scm:git@github.com:a-fistful-of-code/pre-canned.git</connection>
     </scm>
     <developers>
       <developer>
