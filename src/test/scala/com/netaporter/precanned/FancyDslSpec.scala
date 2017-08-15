@@ -10,11 +10,11 @@ import akka.http.scaladsl.model.ContentTypes._
 import scala.concurrent.duration._
 
 class FancyDslSpec
-    extends FlatSpecLike
-    with Matchers
-    with BeforeAndAfter
-    with BeforeAndAfterAll
-    with BaseSpec {
+  extends FlatSpecLike
+  with Matchers
+  with BeforeAndAfter
+  with BeforeAndAfterAll
+  with BaseSpec {
 
   // format: OFF
 

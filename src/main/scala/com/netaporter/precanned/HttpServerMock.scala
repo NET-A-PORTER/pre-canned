@@ -30,7 +30,8 @@ object HttpServerMock {
     requestToStrictDuration: FiniteDuration = 5.seconds,
     //you can't pre-can a delayed response with a delay larger than this timeout
     mockAskTimeout: Timeout = 1.minute)(req: HttpRequest)(
-      implicit ec: ExecutionContext, materializer: Materializer): Future[HttpResponse] = req
+    implicit
+    ec: ExecutionContext, materializer: Materializer): Future[HttpResponse] = req
     .toStrict(requestToStrictDuration)
     .flatMap(mockRef.ask(_)(timeout = mockAskTimeout)).mapTo[HttpResponse]
 
