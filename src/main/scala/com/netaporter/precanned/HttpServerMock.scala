@@ -19,7 +19,17 @@ object HttpServerMock {
     val empty = PrecannedResponse(HttpResponse(), Duration.Zero)
   }
 
-  case class ExpectAndRespondWith(expects: Expect, respondWith: PrecannedResponse)
+  /**
+   * @param expects       to get this response
+   * @param respondWith   response itself
+   * @param numberOfTimes to respond with this response. `None` for unlimited.
+   */
+  case class ExpectAndRespondWith(
+    expects: Expect,
+    respondWith: PrecannedResponse,
+    numberOfTimes: Option[Int] = None) {
+    numberOfTimes.foreach { t => require(t > 0, s"numberOfTimes Some($t) must be a positive value") }
+  }
   case object PrecannedResponseAdded
 
   case object ClearExpectations
@@ -50,10 +60,24 @@ class HttpServerMock extends Actor {
 
   var responses = Vector.empty[ExpectAndRespondWith]
 
-  def responseFor(request: HttpRequest) =
-    responses.find(_.expects(request)).map(_.respondWith)
+  private def findExpectationFor(request: HttpRequest) = responses.find(_.expects(request))
 
-  def receive = {
+  private def markExpectationFired(expectation: ExpectAndRespondWith): Unit = {
+    val i = responses.indexOf(expectation)
+    if (i == -1)
+      sys.error(s"No such expectation found: $expectation")
+    else
+      expectation.numberOfTimes.foreach { times =>
+        val left = times - 1
+        if (left > 0)
+          responses = responses.updated(i, expectation.copy(numberOfTimes = Some(left)))
+        else
+          responses = responses.take(i) ++ responses.drop(i + 1)
+      }
+  }
+
+  def receive: Receive = {
+
     case expectAndRespond: ExpectAndRespondWith =>
       responses :+= expectAndRespond
       sender ! PrecannedResponseAdded
@@ -63,13 +87,16 @@ class HttpServerMock extends Actor {
       sender ! ExpectationsCleared
 
     case req: HttpRequest =>
-      responseFor(req) match {
-        case Some(PrecannedResponse(response, delay)) =>
+      findExpectationFor(req) match {
+
+        case Some(expectation @ ExpectAndRespondWith(_, PrecannedResponse(response, delay), _)) =>
+          markExpectationFired(expectation)
           if (delay > Duration.Zero) {
             context.system.scheduler.scheduleOnce(delay, sender, response)
           } else {
             sender ! response
           }
+
         case None =>
           sender ! HttpResponse(status = NotFound)
       }

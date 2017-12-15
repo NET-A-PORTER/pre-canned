@@ -13,7 +13,7 @@ import scala.concurrent.{ Await, Future }
 
 object basic extends Expectations with CannedResponses {
 
-  def httpServerMock(af: ActorRefFactory) = {
+  def httpServerMock(af: ActorRefFactory): Start = {
     val actor = af.actorOf(Props[HttpServerMock])
     Start(actor)
   }
@@ -23,7 +23,7 @@ object basic extends Expectations with CannedResponses {
 
     def expect(es: Expect*) = MockExpects(mock, es)
 
-    def clearExpectations(blockUpTo: FiniteDuration = 3.seconds) = {
+    def clearExpectations(blockUpTo: FiniteDuration = 3.seconds): MockDsl = {
       val clearing = mock.ask(ClearExpectations)(Timeout(blockUpTo))
       if (blockUpTo > Duration.Zero) {
         Await.result(clearing, blockUpTo)
@@ -39,11 +39,10 @@ object basic extends Expectations with CannedResponses {
       val bindFuture = HttpServerMock.startServer(mock, port, interface)
       BindInProgress(mock, bindFuture, t)
     }
-
   }
 
   case class BindInProgress(mock: ActorRef, bind: Future[Http.ServerBinding], t: Timeout) extends MockDsl {
-    def block = {
+    def block: BoundComplete = {
       val bound = Await.result(bind, t.duration)
       BoundComplete(mock, bound)
     }
@@ -51,9 +50,21 @@ object basic extends Expectations with CannedResponses {
 
   case class BoundComplete(mock: ActorRef, binding: Http.ServerBinding) extends MockDsl
 
-  case class MockExpects(mock: ActorRef, expects: Seq[Expect]) {
+  case class MockExpects(mock: ActorRef, expects: Seq[Expect], numberOfTimes: Option[Int] = None) {
+
+    numberOfTimes.foreach { num => require(num > 0, s"numberOfTimes Some($num) must be a positive value") }
+
+    /** Sets the number of times to respond with this response. Must be positive! */
+    def numberOfTimes(num: Int): MockExpects = this.copy(numberOfTimes = Some(num))
+
+    /** Sets the number of times to respond with this response. `None` for unlimited. Must be positive! */
+    def numberOfTimes(num: Option[Int]): MockExpects = this.copy(numberOfTimes = num)
+
     def andRespondWith(pcs: Precanned*): ExpectationAddInProgress = {
-      val expectAndRespond = ExpectAndRespondWith(r => expects.forall(_.apply(r)), chain(pcs)(PrecannedResponse.empty))
+      val expectAndRespond = ExpectAndRespondWith(
+        expects = r => expects.forall(_.apply(r)),
+        respondWith = chain(pcs)(PrecannedResponse.empty),
+        numberOfTimes = numberOfTimes)
       // 60 seconds is a hack for users who want to use `ExpectationAddInProgress.blockFor`. Would be nice to use their
       // timeout specified in the method, but we do not have that yet here
       // Adding an expectation is a fast operation, so it is reasonably safe to assume we will never need to wait longer
@@ -64,7 +75,7 @@ object basic extends Expectations with CannedResponses {
   }
 
   case class ExpectationAddInProgress(expectInProgress: Future[PrecannedResponseAdded.type]) {
-    def blockFor(blockUpTo: FiniteDuration) = {
+    def blockFor(blockUpTo: FiniteDuration): PrecannedResponseAdded.type = {
       Await.result(expectInProgress, blockUpTo)
     }
   }

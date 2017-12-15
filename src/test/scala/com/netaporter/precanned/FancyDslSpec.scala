@@ -19,7 +19,7 @@ class FancyDslSpec
   // format: OFF
 
   val port = 8766
-  val animalApi = httpServerMock(system).bind(port).block
+  val animalApi: BoundComplete = httpServerMock(system).bind(port).block
 
   after { animalApi.clearExpectations() }
   override def afterAll() {

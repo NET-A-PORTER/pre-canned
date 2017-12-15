@@ -18,7 +18,7 @@ class BasicDslSpec
   with BaseSpec {
 
   val port = 8765
-  val animalApi = httpServerMock(system).bind(8765).block
+  val animalApi: BoundComplete = httpServerMock(system).bind(8765).block
 
   after { animalApi.clearExpectations() }
   override def afterAll() {
@@ -142,5 +142,24 @@ class BasicDslSpec
     val res = Await.result(resF, dur)
 
     res.entity.asString should equal("OK")
+  }
+
+  "numberOfTimes" should "cause the response to be served only limited number of times" in {
+    animalApi.expect(get, path("/animals")).numberOfTimes(2).andRespondWith(status(200)).blockFor(3.seconds)
+
+    // first
+    val resF1 = pipeline(Get(s"http://127.0.0.1:$port/animals"))
+    val res1 = Await.result(resF1, dur)
+    res1.status.intValue should equal(200)
+
+    // second
+    val resF2 = pipeline(Get(s"http://127.0.0.1:$port/animals"))
+    val res2 = Await.result(resF2, dur)
+    res2.status.intValue should equal(200)
+
+    // unexpected
+    val resF3 = pipeline(Get(s"http://127.0.0.1:$port/animals"))
+    val res3 = Await.result(resF3, dur)
+    res3.status.intValue should equal(404)
   }
 }
