@@ -2,15 +2,19 @@ package com.netaporter.precanned
 
 import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
 import com.netaporter.precanned.dsl.fancy._
-import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, Matchers }
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll }
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 import akka.http.scaladsl.model.headers._
+
 import scala.concurrent.Await
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.ContentTypes._
+
 import scala.concurrent.duration._
 
 class FancyDslSpec
-  extends FlatSpecLike
+  extends AnyFlatSpecLike
   with Matchers
   with BeforeAndAfter
   with BeforeAndAfterAll

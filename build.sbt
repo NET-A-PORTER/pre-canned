@@ -11,9 +11,9 @@ name := "pre-canned"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
-val akkaVersion = "2.4.20"
-val akkaHttpVersion = "10.0.9"
-val scalatestVersion = "3.0.3"
+val akkaVersion = "2.5.27"
+val akkaHttpVersion = "10.1.11"
+val scalatestVersion = "3.1.0"
 
 libraryDependencies ++=
   "com.typesafe.akka" %% "akka-actor" % akkaVersion ::

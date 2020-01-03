@@ -3,14 +3,16 @@ package com.netaporter.precanned
 import akka.http.scaladsl.model.{ HttpEntity, StatusCodes }
 import StatusCodes._
 import com.netaporter.precanned.HttpServerMock.PrecannedResponseAdded
-import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, Matchers, OptionValues }
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, OptionValues }
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 import dsl.basic._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class BasicDslSpec
-  extends FlatSpecLike
+  extends AnyFlatSpecLike
   with Matchers
   with BeforeAndAfter
   with BeforeAndAfterAll
