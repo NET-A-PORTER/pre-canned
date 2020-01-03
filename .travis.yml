@@ -6,7 +6,7 @@ jdk:
   - oraclejdk8
 
 scala:
-  - 2.11.11
-  - 2.12.3
+  - 2.11.12
+  - 2.12.10
 
 sudo: false # Enable new travis container-based infrastructure

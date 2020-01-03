@@ -1,7 +1,7 @@
 organization := "io.github.a-fistful-of-code"
 
-val scala211Version = "2.11.11"
-val scala212Version = "2.12.3"
+val scala211Version = "2.11.12"
+val scala212Version = "2.12.10"
 
 scalaVersion := scala212Version
 
