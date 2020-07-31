@@ -13,7 +13,7 @@ import akka.pattern.ask
 object fancy extends Expectations with CannedResponses {
 
   def httpServerMock(implicit af: ActorRefFactory) = {
-    val actor = af.actorOf(Props[HttpServerMock])
+    val actor = af.actorOf(Props[HttpServerMock]())
     Start(actor)
   }
 
@@ -41,7 +41,9 @@ object fancy extends Expectations with CannedResponses {
 
       def and(also: Precanned) = copy(response = response andThen also)
 
-      def end(blockUpTo: FiniteDuration = 3.seconds): Option[PrecannedResponseAdded.type] = {
+      def end: Option[PrecannedResponseAdded.type] = end(3.seconds)
+
+      def end(blockUpTo: FiniteDuration): Option[PrecannedResponseAdded.type] = {
         val expectInProgress = mock.ask(ExpectAndRespondWith(expect, response(PrecannedResponse.empty)))(blockUpTo)
         if (blockUpTo > Duration.Zero) {
           Some(Await.result(expectInProgress.mapTo[PrecannedResponseAdded.type], blockUpTo))

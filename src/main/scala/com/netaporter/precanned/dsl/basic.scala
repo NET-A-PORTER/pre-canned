@@ -14,7 +14,7 @@ import scala.concurrent.{ Await, Future }
 object basic extends Expectations with CannedResponses {
 
   def httpServerMock(af: ActorRefFactory): Start = {
-    val actor = af.actorOf(Props[HttpServerMock])
+    val actor = af.actorOf(Props[HttpServerMock]())
     Start(actor)
   }
 

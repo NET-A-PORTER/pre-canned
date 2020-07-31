@@ -1,19 +1,19 @@
 organization := "io.github.a-fistful-of-code"
 
-val scala211Version = "2.11.12"
-val scala212Version = "2.12.10"
+val scala212Version = "2.12.11"
+val scala213Version = "2.13.3"
 
-scalaVersion := scala212Version
+scalaVersion := scala213Version
 
-crossScalaVersions := Seq(scala211Version, scala212Version)
+crossScalaVersions := Seq(scala212Version, scala213Version)
 
 name := "pre-canned"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
-val akkaVersion = "2.5.27"
-val akkaHttpVersion = "10.1.11"
-val scalatestVersion = "3.1.0"
+val akkaVersion = "2.6.8"
+val akkaHttpVersion = "10.1.12"
+val scalatestVersion = "3.2.0"
 
 libraryDependencies ++=
   "com.typesafe.akka" %% "akka-actor" % akkaVersion ::

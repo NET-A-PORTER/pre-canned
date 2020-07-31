@@ -23,7 +23,7 @@ class BasicDslSpec
   val animalApi: BoundComplete = httpServerMock(system).bind(8765).block
 
   after { animalApi.clearExpectations() }
-  override def afterAll() {
+  override def afterAll(): Unit = {
     Await.result(system.terminate(), Duration.Inf)
   }
 

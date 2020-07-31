@@ -6,7 +6,7 @@ import akka.http.scaladsl.model._
 import com.netaporter.precanned.HttpServerMock._
 import StatusCodes._
 import akka.http.scaladsl.Http
-import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.util.Timeout
 
@@ -48,7 +48,6 @@ object HttpServerMock {
   def startServer(
     mockRef: ActorRef, port: Int, interface: String)(implicit system: ActorSystem): Future[Http.ServerBinding] = {
     implicit val ec: ExecutionContext = system.dispatcher
-    implicit val materializer: Materializer = ActorMaterializer()
     val handler = Flow[HttpRequest].mapAsyncUnordered(Int.MaxValue)(handleRequest(mockRef))
     Http().bindAndHandle(port = port, interface = interface, handler = handler)
   }
@@ -80,11 +79,11 @@ class HttpServerMock extends Actor {
 
     case expectAndRespond: ExpectAndRespondWith =>
       responses :+= expectAndRespond
-      sender ! PrecannedResponseAdded
+      sender() ! PrecannedResponseAdded
 
     case ClearExpectations =>
       responses = Vector.empty
-      sender ! ExpectationsCleared
+      sender() ! ExpectationsCleared
 
     case req: HttpRequest =>
       findExpectationFor(req) match {
@@ -92,13 +91,13 @@ class HttpServerMock extends Actor {
         case Some(expectation @ ExpectAndRespondWith(_, PrecannedResponse(response, delay), _)) =>
           markExpectationFired(expectation)
           if (delay > Duration.Zero) {
-            context.system.scheduler.scheduleOnce(delay, sender, response)
+            context.system.scheduler.scheduleOnce(delay, sender(), response)
           } else {
-            sender ! response
+            sender() ! response
           }
 
         case None =>
-          sender ! HttpResponse(status = NotFound)
+          sender() ! HttpResponse(status = NotFound)
       }
   }
 }
